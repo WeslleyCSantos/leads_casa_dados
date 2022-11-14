@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 import concurrent.futures
 import threading
 import streamlit as st
+import itertools
 
 
 
@@ -70,6 +71,7 @@ def prepara_request(page=1):
   return data
 
 
+
 def gera_cliente(cnpj,ctx):
   st.report_thread.add_report_ctx(threading.currentThread(), ctx)
   request_client = urllib.request.Request(f'https://casadosdados.com.br/solucao/cnpj/{cnpj}', headers=headers)
@@ -88,6 +90,7 @@ def gera_cliente(cnpj,ctx):
 @st.cache
 def gera_csv():
     lista_clientes = []
+    lista_cnpjs = []
     for i in range(1,51):
         data = prepara_request(i)
         request = urllib.request.Request('https://api.casadosdados.com.br/v2/public/cnpj/search', headers=headers,data=data)
@@ -95,18 +98,21 @@ def gera_csv():
         request.add_header('Content-Length', len(data))
         r = urllib.request.urlopen(request).read().decode('utf-8')
         response = json.loads(r)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
-            ctx = st.report_thread.get_report_ctx()
-            # Start the load operations and mark each future with its URL
-            future_to_url = {executor.submit(gera_cliente, cnpj['cnpj'],ctx): cnpj for cnpj in response['data']['cnpj']}
-            for future in concurrent.futures.as_completed(future_to_url):
-                url = future_to_url[future]
-                try:
-                    data = future.result()
-                except Exception as exc:
-                    pass
-                else:
-                    lista_clientes.append(data)
+        lista_cnpjs.append([cnpj['cnpj'] for cnpj in response['data']['cnpj']])
+    lista_cnpjs = list(itertools.chain.from_iterable(lista_cnpjs))
+    print('Done getting ',len(lista_cnpjs))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        ctx = st.report_thread.get_report_ctx()
+        # Start the load operations and mark each future with its URL
+        future_to_url = {executor.submit(gera_cliente, cnpj,ctx): cnpj for cnpj in lista_cnpjs}
+        for future in concurrent.futures.as_completed(future_to_url):
+            url = future_to_url[future]
+            try:
+                data = future.result()
+            except Exception as exc:
+                pass
+            else:
+                lista_clientes.append(data)
     clientes_df = pd.DataFrame(lista_clientes)
     return clientes_df
 
