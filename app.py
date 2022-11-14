@@ -5,7 +5,10 @@ import pandas as pd
 import urllib
 from bs4 import BeautifulSoup
 import concurrent.futures
+from threading import current_thread
 import streamlit as st
+
+
 
 headers = OrderedDict({
     'authority': 'api.casadosdados.com.br',
@@ -67,7 +70,8 @@ def prepara_request(page=1):
   return data
 
 @st.cache
-def gera_cliente(cnpj):
+def gera_cliente(cnpj,ctx):
+  st.report_thread.add_report_ctx(threading.currentThread(), ctx)
   request_client = urllib.request.Request(f'https://casadosdados.com.br/solucao/cnpj/{cnpj}', headers=headers)
   site_cliente = urllib.request.urlopen(request_client).read().decode('utf-8')
   soup = BeautifulSoup(site_cliente, 'html.parser')
@@ -92,8 +96,9 @@ def gera_csv():
         r = urllib.request.urlopen(request).read().decode('utf-8')
         response = json.loads(r)
         with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+            ctx = st.report_thread.get_report_ctx()
             # Start the load operations and mark each future with its URL
-            future_to_url = {executor.submit(gera_cliente, cnpj['cnpj']): cnpj for cnpj in response['data']['cnpj']}
+            future_to_url = {executor.submit(gera_cliente, cnpj['cnpj'],): cnpj for cnpj in response['data']['cnpj']}
             for future in concurrent.futures.as_completed(future_to_url):
                 url = future_to_url[future]
                 try:
