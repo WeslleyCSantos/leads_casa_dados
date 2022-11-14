@@ -5,7 +5,7 @@ import pandas as pd
 import urllib
 from bs4 import BeautifulSoup
 import concurrent.futures
-from threading import current_thread
+import threading
 import streamlit as st
 
 
@@ -69,7 +69,7 @@ def prepara_request(page=1):
   data = data.encode('utf-8')
   return data
 
-@st.cache
+
 def gera_cliente(cnpj,ctx):
   st.report_thread.add_report_ctx(threading.currentThread(), ctx)
   request_client = urllib.request.Request(f'https://casadosdados.com.br/solucao/cnpj/{cnpj}', headers=headers)
@@ -98,13 +98,13 @@ def gera_csv():
         with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
             ctx = st.report_thread.get_report_ctx()
             # Start the load operations and mark each future with its URL
-            future_to_url = {executor.submit(gera_cliente, cnpj['cnpj'],): cnpj for cnpj in response['data']['cnpj']}
+            future_to_url = {executor.submit(gera_cliente, cnpj['cnpj'],ctx): cnpj for cnpj in response['data']['cnpj']}
             for future in concurrent.futures.as_completed(future_to_url):
                 url = future_to_url[future]
                 try:
                     data = future.result()
                 except Exception as exc:
-                    print('%r generated an exception: %s' % (url, exc))
+                    pass
                 else:
                     lista_clientes.append(data)
     clientes_df = pd.DataFrame(lista_clientes)
@@ -120,7 +120,8 @@ def main():
     st.header('Gerador de Leads')
     st.subheader('Demonstração de MVP')
     st.markdown('---')
-    st.download_button(label='Baixar leads como CSV',data=convert_df(gera_csv()),file_name='Arquivo_clientes.csv',mime='text/csv')    
+    df = gera_csv()
+    st.download_button(label='Baixar leads como CSV',data=convert_df(df),file_name='Arquivo_clientes.csv',mime='text/csv')    
 
 
 
