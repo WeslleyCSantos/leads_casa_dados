@@ -26,7 +26,7 @@ headers = OrderedDict({
     'sec-fetch-dest': 'empty',
     'sec-fetch-mode': 'cors',
     'sec-fetch-site': 'same-site',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.134 Safari/537.36 OPR/89.0.4447.101',
+    'User-agent': 'Its a me mario',
 })
 
 lista_parametros = ['CNPJ','Razão Social','Telefone','E-MAIL','Quadro Societário','Atividade Principal']
@@ -92,7 +92,7 @@ def gera_cliente(cnpj,ctx):
 def gera_csv():
     lista_clientes = []
     lista_cnpjs = []
-    for i in range(1,3):
+    for i in range(1,51):
         data = prepara_request(i)
         request = urllib.request.Request('https://api.casadosdados.com.br/v2/public/cnpj/search', headers=headers,data=data)
         request.add_header('Content-Type', 'application/json; charset=utf-8')
