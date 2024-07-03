@@ -92,7 +92,7 @@ def gera_cliente(cnpj,ctx):
 def gera_csv():
     lista_clientes = []
     lista_cnpjs = []
-    for i in range(1,51):
+    for i in range(1,3):
         data = prepara_request(i)
         request = urllib.request.Request('https://api.casadosdados.com.br/v2/public/cnpj/search', headers=headers,data=data)
         request.add_header('Content-Type', 'application/json; charset=utf-8')
