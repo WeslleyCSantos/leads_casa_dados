@@ -106,12 +106,12 @@ def gera_csv():
             lista_cnpjs.append([cnpj['cnpj'] for cnpj in response['data']['cnpj']])
         except urllib.error.HTTPError as e:
             if e.code == 429:  # Check if it's a "Too Many Requests" error
-              time.sleep(min( backoff_factor** error_time,max_wait_time))  # Exponential backoff: wait for increasing durations
-              error_time+=1
-              print(f"Too many requests. Retrying after {backoff_factor ** error_time} seconds...")
-              i -= 1  # Retry the same page
-                else:
-                  raise  # Raise other HTTP errors
+                time.sleep(min( backoff_factor** error_time,max_wait_time))  # Exponential backoff: wait for increasing durations
+                error_time+=1
+                print(f"Too many requests. Retrying after {backoff_factor ** error_time} seconds...")
+                i -= 1  # Retry the same page
+            else:
+                raise  # Raise other HTTP errors
         else:
             error_time = 1  # Reset error counter on successful request
     lista_cnpjs = list(itertools.chain.from_iterable(lista_cnpjs))
