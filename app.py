@@ -8,6 +8,7 @@ import concurrent.futures
 import threading
 import streamlit as st
 import itertools
+import time
 
 
 
@@ -99,6 +100,7 @@ def gera_csv():
         r = urllib.request.urlopen(request).read().decode('utf-8')
         response = json.loads(r)
         lista_cnpjs.append([cnpj['cnpj'] for cnpj in response['data']['cnpj']])
+        time.sleep(0.5)
     lista_cnpjs = list(itertools.chain.from_iterable(lista_cnpjs))
     print('Done getting ',len(lista_cnpjs))
     with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
